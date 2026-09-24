@@ -1,0 +1,88 @@
+/*
+ * 6 键宏键盘 + 2 个 EC11 旋钮
+ * 主控: nice!nano v2 (nRF52840) 兼容板
+ *
+ * 接线对照（板上丝印 / 芯片引脚）:
+ *   行 1 -> 022 (P0.22)   行 2 -> 024 (P0.24)
+ *   列 1 -> 100 (P1.00)   列 2 -> 011 (P0.11)   列 3 -> 104 (P1.04)
+ *   旋钮 1: A -> 115 (P1.15), B -> 002 (P0.02), C -> GND
+ *   旋钮 2: A -> 029 (P0.29), B -> 031 (P0.31), C -> GND
+ *   电池: B+ / B-（正极串拨动开关）
+ *   二极管方向: 黑环端朝行线 (col2row)
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <physical_layouts.dtsi>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,matrix_transform = &default_transform;
+        zmk,physical-layout = &macropad6_physical_layout;
+    };
+
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <3>;
+        rows = <2>;
+        map = <
+            RC(0,0) RC(0,1) RC(0,2)
+            RC(1,0) RC(1,1) RC(1,2)
+        >;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+        diode-direction = "col2row";
+        wakeup-source;
+
+        row-gpios
+            = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* 022 -> 行 1 */
+            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* 024 -> 行 2 */
+            ;
+        col-gpios
+            = <&gpio1 0 GPIO_ACTIVE_HIGH>                       /* 100 -> 列 1 */
+            , <&gpio0 11 GPIO_ACTIVE_HIGH>                      /* 011 -> 列 2 */
+            , <&gpio1 4 GPIO_ACTIVE_HIGH>                       /* 104 -> 列 3 */
+            ;
+    };
+
+    /* 物理布局：给 ZMK Studio 网页改键画键盘用，不影响按键功能 */
+    macropad6_physical_layout: macropad6_physical_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "Macropad6";
+        transform = <&default_transform>;
+        kscan = <&kscan0>;
+
+        keys  //                     w   h    x    y   rot   rx   ry
+            = <&key_physical_attrs 100 100    0    0     0    0    0>
+            , <&key_physical_attrs 100 100  110    0     0    0    0>
+            , <&key_physical_attrs 100 100  220    0     0    0    0>
+            , <&key_physical_attrs 100 100    0  110     0    0    0>
+            , <&key_physical_attrs 100 100  110  110     0    0    0>
+            , <&key_physical_attrs 100 100  220  110     0    0    0>
+            ;
+    };
+
+    left_encoder: encoder_left {
+        compatible = "alps,ec11";
+        a-gpios = <&gpio1 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* 115 -> 旋钮1 A */
+        b-gpios = <&gpio0 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;   /* 002 -> 旋钮1 B */
+        steps = <80>;
+        status = "okay";
+    };
+
+    right_encoder: encoder_right {
+        compatible = "alps,ec11";
+        a-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* 029 -> 旋钮2 A */
+        b-gpios = <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* 031 -> 旋钮2 B */
+        steps = <80>;
+        status = "okay";
+    };
+
+    sensors: sensors {
+        compatible = "zmk,keymap-sensors";
+        sensors = <&left_encoder &right_encoder>;
+        triggers-per-rotation = <20>;
+    };
+};

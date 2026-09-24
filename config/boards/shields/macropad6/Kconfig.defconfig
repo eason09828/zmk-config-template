@@ -1,0 +1,10 @@
+if SHIELD_MACROPAD6
+
+config ZMK_KEYBOARD_NAME
+    default "Macropad6"
+
+config ZMK_SLEEP
+    bool
+    default y
+
+endif
